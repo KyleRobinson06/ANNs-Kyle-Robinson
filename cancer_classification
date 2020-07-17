@@ -1,5 +1,5 @@
 # This model seeks to classify tumours as malignant or benign based on data of key characteristics. 
-# See Decription for link to raw data.
+# Raw Data available @ https://gist.github.com/achristie/ca6abc53001ee31ca7b72c17475cfd4c
 
 # Import libraries
 import pandas as pd
