@@ -1,0 +1,62 @@
+#This project comes from 'Hands on Machine Learning with Scikit-Learn, Keras, and Tensorflow, 2nd Edition' by Aurelien Geron, pg 21
+#Publisher: O'Reilly Media, Inc.
+ISBN: 9781492032649
+
+#The models seek to predict the responses to a life satisfaction survey scored 1-10, 1=lowest 10=highest, based on GDP
+#2 methods are used: Linear Regression and KNN
+#raw data can be found here http://www.edwardhk.com/language/python/hands-on-machine-learning-example-1-1/
+
+#IMPORTS
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import sklearn
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
+
+#Load Data
+oecd_bli = pd.read_csv("BLI_26072020212014975.csv", thousands=",")
+gdp_per_capita = pd.read_csv("gdp_per_capita.csv", thousands=",", delimiter="\t",encoding="latin1", na_values="n/a")
+
+#Prepare data
+def prepare_country_stats(oecd_bli, gdp_per_capita):
+    oecd_bli = oecd_bli[oecd_bli["INEQUALITY"] == "TOT"]
+    oecd_bli = oecd_bli.pivot(index="Country", columns="Indicator", values="Value")
+    gdp_per_capita.rename(columns={"2015": "GDP per capita"}, inplace=True)
+    gdp_per_capita.set_index("Country", inplace=True)
+    full_country_stats = pd.merge(left=oecd_bli, right=gdp_per_capita,left_index=True, right_index=True)
+    full_country_stats.sort_values(by="GDP per capita", inplace=True)
+    remove_indices = [0, 1, 6, 8, 33, 34, 35]
+    keep_indices = list(set(range(36)) - set(remove_indices))
+    return full_country_stats[["GDP per capita", 'Life satisfaction']].iloc[keep_indices]
+    
+country_stats = prepare_country_stats(oecd_bli, gdp_per_capita)
+X= np.c_[country_stats["GDP per capita"]]
+y=np.c_[country_stats["Life satisfaction"]]
+
+#Visualize https://imgur.com/a/SZ59wVG
+country_stats.plot(kind="scatter", x="GDP per capita", y="Life satisfaction")
+plt.show()
+
+#Models
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
+lin_reg_model=LinearRegression()
+lin_reg_model2=KNeighborsRegressor(n_neighbors=3)
+
+#Train model
+lin_reg_model.fit(X,y)
+lin_reg_model2.fit(X,y)
+
+#Make a prediction for Cyprus
+X_new=[[22587]] #Cyprus GDP per capita
+print(lin_reg_model.predict(X_new))
+print(lin_reg_model2.predict(X_new))
+
+#Results
+[[6.25984414]]
+[[5.86666667]]
+
+#Based on averages of neighbour countries with similar GDPs and corresponding Life Satisfaction results, we can estimate Cyprus should have a value of ~5.77
+#Assuming this is roughly correct, our KNN model is a stronger predictor.
